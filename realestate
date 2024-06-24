@@ -41,22 +41,72 @@ plt.title('Correlation Matrix')
 plt.show()
 
 print(correlation_matrix)
+
+
+
+
+column_num = ['bed','bath','acre_lot','house_size','price']
+plt.boxplot(df[column_num])
+plt.xticks([1, 2, 3, 4, 5], column_num)
+plt.title('Outlier Before Remove')
+plt.show()
+print(f'Total Row With Outlier: {df.shape[0]}')
+
+Q1 = df[column_num].quantile(0.25) Q3 = df[column_num].quantile(0.75) IQR = Q3 - Q1 df = df[~((df[column_num] < (Q1 - 1.5 * IQR)) | (df[column_num] > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+column_num = ['bed','bath','acre_lot','house_size','price'] plt..matplotlib.pyplot.boxplot'}, '*')" style="box-sizing: border-box; text-rendering: auto; -webkit-font-smoothing: antialiased; background-color: transparent; color: inherit; text-decoration: underline dashed rgb(134, 220, 255); cursor: pointer;">boxplot(df[column_num]) plt..matplotlib.pyplot.xticks'}, '*')" style="box-sizing: border-box; text-rendering: auto; -webkit-font-smoothing: antialiased; background-color: transparent; color: inherit; text-decoration: underline dashed rgb(134, 220, 255); cursor: pointer;">xticks([1, 2, 3, 4, 5], column_num) plt..matplotlib.pyplot.title'}, '*')" style="box-sizing: border-box; text-rendering: auto; -webkit-font-smoothing: antialiased; background-color: transparent; color: inherit; text-decoration: underline dashed rgb(134, 220, 255); cursor: pointer;">title('Outlier After Remove') plt..matplotlib.pyplot.show'}, '*')" style="box-sizing: border-box; text-rendering: auto; -webkit-font-smoothing: antialiased; background-color: transparent; color: inherit; text-decoration: underline dashed rgb(134, 220, 255); cursor: pointer;">show() print(f'Total Row Without Outlier: {df.shape[0]}')
+
+
+df.describe()
+
+
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.linear_model import RidgeCV, ElasticNetCV
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_err
 
-# Selecting features and target variable
-features = ['Distance to the nearest MRT station', 'Number of convenience stores', 'Latitude', 'Longitude']
-target = 'House price of unit area'
+df['house_size'] = StandardScaler().fit_transform(df['house_size'].values.reshape(len(df), 1)) df['price'] = StandardScaler().fit_transform(df['price'].values.reshape(len(df), 1))
+df['bed'] = MinMaxScaler().fit_transform(df['bed'].values.reshape(len(df), 1))
 
-X = real_estate_data[features]
-y = real_estate_data[target]
+df['bath'] = MinMaxScaler().fit_transform(df['bath'].values.reshape(len(df), 1))
+df['acre_lot'] = MinMaxScaler().fit_transform(df['acre_lot'].values.reshape(len(df), 1))
 
-# Splitting the dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+df.head()
 
-# Model initialization
-model = LinearRegression()
+for_sale	0.333333	0.333333	0.097561	Adjuntas	Puerto Rico	601.0	-0.919266	-1.143933
+1	for_sale	0.500000	0.333333	0.065041	Adjuntas	Puerto Rico	601.0	0.149757	-1.217153
+2	for_sale	0.166667	0.000000	0.121951	Juana Diaz	Puerto Rico	795.0	-1.222185	-1.255227
+3	for_sale	0.500000	0.333333	0.081301	Ponce	Puerto Rico	731.0	0.630553	-1.026780
+4	for_sale	0.833333	0.333333	0.040650	
 
-# Training the model
-model.fit(X_train, y_train)
+X = df[['bed', 'bath', 'acre_lot', 'house_size', 'city', 'state']] y = df['price'] # one-hot encode the categorical features X = pd..pandas.get_dummies'}, '*')" style="box-sizing: border-box; text-rendering: auto; -webkit-font-smoothing: antialiased; background-color: transparent; color: inherit; text-decoration: underline dashed rgb(134, 220, 255); cursor: pointer;">get_dummies(X, columns=['city', 'state']) # split the data into training and testing sets X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#create the decision tree model model_DT = DecisionTreeRegressor(max_depth=5) # fit the model to the training data model_DT.fit(X_train, y_train) # make predictions on the testing data y_pred = model_DT.predict(X_test) # calculate mse_DT = mean_squared_error(y_test, y_pred) rmse_DT = mean_squared_error(y_test, y_pred, squared=False) mae_DT = mean_absolute_error(y_test, y_pred) r2_DT = r2_score(y_test, y_pred)
+
+model_RF = RandomForestRegressor(n_estimators=100, random_state=42) model_RF.fit(X_train, y_train) 
+ y_pred = model_RF.predict(X_test) 
+mse_RF = mean_squared_error(y_test, y_pred) rmse_RF = mean_squared_error(y_test, y_pred, squared=False) mae_RF = mean_absolute_error(y_test, y_pred) r2_RF = r2_score(y_test, y_pred)
+
+
+model_GD = GradientBoostingRegressor(learning_rate=0.05, n_estimators=150, max_depth=3, min_samples_split=4, min_samples_leaf=1) model_GD.fit(X_train, y_train) 
+y_pred = model_GD.predict(X_test) 
+#Evaluation
+ mse_GD = mean_squared_error(y_test, y_pred) rmse_GD = mean_squared_error(y_test, y_pred, squared=False) mae_GD = mean_absolute_error(y_test, y_pred) r2_GD = r2_score(y_test, y_pred)
+
+ridge_cv_model = RidgeCV(alphas=(1.38), scoring='neg_mean_absolute_error') ridge_cv_model.fit(X_train, y_train) y_pred = ridge_cv_model.predict(X_test) mse_R = mean_squared_error(y_test, y_pred) rmse_R = mean_squared_error(y_test, y_pred, squared=False) mae_R = mean_absolute_error(y_test, y_pred) r2_R = r2_score(y_test, y_pred)
+
+elastic_model = ElasticNetCV(l1_ratio=[0.01], tol=0.01) elastic_model.fit(X_train, y_train) y_pred = elastic_model.predict(X_test) mse_E = mean_squared_error(y_test, y_pred) rmse_E = mean_squared_error(y_test, y_pred, squared=False) mae_E = mean_absolute_error(y_test, y_pred) r2_E = r2_score(y_test, y_pred)
+
+
+results = { 'Decision Tree': {'MSE': mse_DT, 'RMSE': rmse_DT, 'MAE': mae_DT, 'R^2': r2_DT}, 'Random Forest': {'MSE': mse_RF, 'RMSE': rmse_RF, 'MAE': mae_RF, 'R^2': r2_RF}, 'Gradient Boosting': {'MSE': mse_GD, 'RMSE': rmse_GD, 'MAE': mae_GD, 'R^2': r2_GD}, 'Ridge CV': {'MSE': mse_R, 'RMSE': rmse_R, 'MAE': mae_R, 'R^2': r2_R}, 'ElasticNet CV': {'MSE': mse_E, 'RMSE': rmse_E, 'MAE': mae_E, 'R^2': r2_E} } 
+
+data = pd.DataFrame.from_dict(results, orient= 'index')
+data=data.applymap(lambda x: f'{x:2f}')
+
+print(data)
+
+MSE RMSE MAE R^2 Decision Tree 0.61 0.78 0.57 0.40 Random Forest 0.37 0.61 0.39 0.64 Gradient Boosting 0.54 0.74 0.54 0.46 Ridge CV 0.41 0.64 0.46 0.60 ElasticNet CV 0.62 0.79 0.58 0.38
+
